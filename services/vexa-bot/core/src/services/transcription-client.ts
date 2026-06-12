@@ -42,6 +42,13 @@ export interface TranscriptionClientConfig {
   /** Minimum silence duration (ms) for VAD to split segments. Lower = more splits at natural pauses.
    *  Default: server default (160ms). Use ~100ms for more granular segments. */
   minSilenceDurationMs?: number;
+  /** Model name sent in the request. Default: "whisper-1" */
+  model?: string;
+  /** Request dialect. "vexa" (default) targets the in-house transcription-service:
+   *  legacy `timestamp_granularities` field plus vexa-specific VAD form fields.
+   *  "openai" targets external OpenAI-compatible providers (OpenAI, Groq, ...):
+   *  standard `timestamp_granularities[]` array field, no non-standard fields. */
+  dialect?: 'vexa' | 'openai';
 }
 
 /**
@@ -57,6 +64,8 @@ export class TranscriptionClient {
   private sampleRate: number;
   private maxSpeechDurationSec: number | undefined;
   private minSilenceDurationMs: number | undefined;
+  private model: string;
+  private dialect: 'vexa' | 'openai';
   constructor(config: TranscriptionClientConfig) {
     // Ensure serviceUrl ends with the transcriptions endpoint
     this.serviceUrl = config.serviceUrl.replace(/\/+$/, '');
@@ -69,6 +78,8 @@ export class TranscriptionClient {
     this.sampleRate = config.sampleRate ?? 16000;
     this.maxSpeechDurationSec = config.maxSpeechDurationSec;
     this.minSilenceDurationMs = config.minSilenceDurationMs;
+    this.model = config.model || 'whisper-1';
+    this.dialect = config.dialect || 'vexa';
   }
 
   /**
@@ -126,7 +137,7 @@ export class TranscriptionClient {
     parts.push(Buffer.from(
       `--${boundary}\r\n` +
       `Content-Disposition: form-data; name="model"\r\n\r\n` +
-      `whisper-1\r\n`
+      `${this.model}\r\n`
     ));
 
     // Response format part
@@ -145,29 +156,46 @@ export class TranscriptionClient {
       ));
     }
 
-    // Request word-level timestamps
-    parts.push(Buffer.from(
-      `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="timestamp_granularities"\r\n\r\n` +
-      `word\r\n`
-    ));
-
-    // Max speech segment duration (controls how often Whisper splits segments)
-    if (this.maxSpeechDurationSec !== undefined) {
+    // Request word-level timestamps. The OpenAI standard expects the array form
+    // `timestamp_granularities[]` and omits segments unless `segment` is also
+    // requested explicitly (verified against Groq 2026-06-12); the in-house
+    // transcription-service reads the legacy scalar field (main.py Form("segment"))
+    // and always returns segments.
+    if (this.dialect === 'openai') {
+      for (const granularity of ['segment', 'word']) {
+        parts.push(Buffer.from(
+          `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="timestamp_granularities[]"\r\n\r\n` +
+          `${granularity}\r\n`
+        ));
+      }
+    } else {
       parts.push(Buffer.from(
         `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="max_speech_duration_s"\r\n\r\n` +
-        `${this.maxSpeechDurationSec}\r\n`
+        `Content-Disposition: form-data; name="timestamp_granularities"\r\n\r\n` +
+        `word\r\n`
       ));
     }
 
-    // Min silence duration for VAD segment splitting (lower = more splits at natural pauses)
-    if (this.minSilenceDurationMs !== undefined) {
-      parts.push(Buffer.from(
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="min_silence_duration_ms"\r\n\r\n` +
-        `${this.minSilenceDurationMs}\r\n`
-      ));
+    // Vexa-specific VAD tuning fields — only the in-house service understands these
+    if (this.dialect !== 'openai') {
+      // Max speech segment duration (controls how often Whisper splits segments)
+      if (this.maxSpeechDurationSec !== undefined) {
+        parts.push(Buffer.from(
+          `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="max_speech_duration_s"\r\n\r\n` +
+          `${this.maxSpeechDurationSec}\r\n`
+        ));
+      }
+
+      // Min silence duration for VAD segment splitting (lower = more splits at natural pauses)
+      if (this.minSilenceDurationMs !== undefined) {
+        parts.push(Buffer.from(
+          `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="min_silence_duration_ms"\r\n\r\n` +
+          `${this.minSilenceDurationMs}\r\n`
+        ));
+      }
     }
 
     // Prompt: previous confirmed text as context for streaming continuity
@@ -211,19 +239,36 @@ export class TranscriptionClient {
 
       const data = await response.json() as any;
 
+      // The in-house service nests word timestamps per segment; the OpenAI
+      // standard (timestamp_granularities[]=word) returns one top-level
+      // `words` array with word-less segments. Normalize to per-segment words
+      // (assigned by word midpoint) so downstream consumers — speaker
+      // attribution flatMaps segment.words — see a single shape.
+      const rawSegments: any[] = data.segments || [];
+      const topWords: any[] = Array.isArray(data.words) ? data.words : [];
+      const needsWordMapping = topWords.length > 0 &&
+        !rawSegments.some((s: any) => Array.isArray(s.words) && s.words.length > 0);
+
       return {
         text: data.text || '',
         language: data.language || language || 'unknown',
         language_probability: data.language_probability ?? 0,
         duration: data.duration || 0,
-        segments: (data.segments || []).map((s: any) => ({
+        segments: rawSegments.map((s: any, i: number) => ({
           start: s.start || 0,
           end: s.end || 0,
           text: s.text || '',
           avg_logprob: s.avg_logprob,
           no_speech_prob: s.no_speech_prob,
           compression_ratio: s.compression_ratio,
-          words: s.words,
+          words: needsWordMapping
+            ? topWords
+                .filter((w: any) => {
+                  const mid = ((w.start || 0) + (w.end || 0)) / 2;
+                  return mid >= (s.start || 0) && (mid < (s.end || 0) || i === rawSegments.length - 1);
+                })
+                .map((w: any) => ({ word: w.word, start: w.start, end: w.end, probability: w.probability ?? 1 }))
+            : s.words,
         })),
       };
     } finally {

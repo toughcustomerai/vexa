@@ -10,6 +10,14 @@
 # Get a key at vexa.ai OR self-host services/transcription-service/ with GPU
 TRANSCRIPTION_SERVICE_URL=https://transcription.vexa.ai/v1/audio/transcriptions
 TRANSCRIPTION_SERVICE_TOKEN=your-token
+# OR any external OpenAI-compatible STT provider. Set PROVIDER=openai to use
+# the strict OpenAI dialect (standard form fields only, timestamp_granularities[]).
+#   Groq:   TRANSCRIPTION_SERVICE_URL=https://api.groq.com/openai/v1/audio/transcriptions
+#           TRANSCRIPTION_SERVICE_MODEL=whisper-large-v3-turbo
+#   OpenAI: TRANSCRIPTION_SERVICE_URL=https://api.openai.com/v1/audio/transcriptions
+#           TRANSCRIPTION_SERVICE_MODEL=whisper-1
+# TRANSCRIPTION_SERVICE_PROVIDER=openai
+# TRANSCRIPTION_SERVICE_MODEL=
 
 # ============================================================================
 # Ports — change these to avoid conflicts with other stacks

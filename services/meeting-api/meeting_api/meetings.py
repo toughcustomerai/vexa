@@ -2062,13 +2062,18 @@ async def transcribe_meeting(
     # 4. Send to transcription service
     tx_url = os.environ.get("TRANSCRIPTION_SERVICE_URL", "")
     tx_token = os.environ.get("TRANSCRIPTION_SERVICE_TOKEN", "")
+    # Model name override for external OpenAI-compatible providers (Groq, OpenAI, ...).
+    # Default is the in-house transcription-service model name.
+    tx_model = os.environ.get("TRANSCRIPTION_SERVICE_MODEL") or "large-v3-turbo"
     if not tx_url:
         raise HTTPException(status_code=503, detail="TRANSCRIPTION_SERVICE_URL not configured")
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             files = {"file": (f"recording.{media_format}", audio_data, f"audio/{media_format}")}
-            form_data = {"model": "large-v3-turbo"}
+            # verbose_json is required for external providers to return segments;
+            # the in-house service accepts it too (segments are its native output).
+            form_data = {"model": tx_model, "response_format": "verbose_json"}
             if req.language:
                 form_data["language"] = req.language
             headers = {}
