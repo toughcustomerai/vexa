@@ -27,6 +27,9 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 MEETING_API_URL = os.getenv("MEETING_API_URL", "http://meeting-api:8080")
 BOT_API_TOKEN = os.getenv("BOT_API_TOKEN", "")
 DEFAULT_LEAD_TIME_MINUTES = int(os.getenv("DEFAULT_LEAD_TIME_MINUTES", "2"))
+# Branding: calendar-dispatched bots use the same default name as manual sends
+# (meeting-api BOT_DEFAULT_NAME). Was hardcoded "Vexa - <title>".
+BOT_DEFAULT_NAME = os.getenv("BOT_DEFAULT_NAME", "ToughCall")
 
 
 async def sync_user_calendar(user_id: int, db: AsyncSession) -> int:
@@ -164,7 +167,7 @@ async def schedule_upcoming_bots(db: AsyncSession) -> int:
                     json={
                         "platform": event.platform,
                         "native_meeting_id": _extract_native_id(event.meeting_url, event.platform),
-                        "bot_name": f"Vexa - {event.title or 'Calendar'}",
+                        "bot_name": BOT_DEFAULT_NAME,
                     },
                     headers={"X-API-Key": BOT_API_TOKEN},
                     timeout=30,
