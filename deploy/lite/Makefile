@@ -135,6 +135,8 @@ up:
 	TX_TOKEN=$${TX_TOKEN:-$$(grep -E '^TRANSCRIPTION_SERVICE_TOKEN=' $(ENV_FILE) 2>/dev/null | cut -d= -f2)}; \
 	TX_MODEL=$$(grep -E '^TRANSCRIPTION_SERVICE_MODEL=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
 	TX_PROVIDER=$$(grep -E '^TRANSCRIPTION_SERVICE_PROVIDER=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
+	BOT_NAME=$$(grep -E '^BOT_DEFAULT_NAME=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
+	BOT_ADMIT_MS=$$(grep -E '^BOT_MAX_WAIT_FOR_ADMISSION_MS=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
 	ADMIN_TK=$$(grep -E '^ADMIN_TOKEN=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
 	ADMIN_TK=$${ADMIN_TK:-changeme}; \
 	echo "Starting PostgreSQL..."; \
@@ -173,6 +175,8 @@ up:
 		-e TRANSCRIPTION_SERVICE_TOKEN=$$TX_TOKEN \
 		-e TRANSCRIPTION_SERVICE_MODEL=$$TX_MODEL \
 		-e TRANSCRIPTION_SERVICE_PROVIDER=$$TX_PROVIDER \
+		-e BOT_DEFAULT_NAME=$$BOT_NAME \
+		-e BOT_MAX_WAIT_FOR_ADMISSION_MS=$$BOT_ADMIT_MS \
 		$(DOCKERHUB_USER)/$(IMAGE_NAME):$$IMAGE_TAG > /dev/null; \
 	echo "  Waiting for services (up to 2 min)..."; \
 	for i in $$(seq 1 24); do \

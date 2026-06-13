@@ -19,6 +19,18 @@ TRANSCRIPTION_SERVICE_TOKEN=your-token
 # TRANSCRIPTION_SERVICE_PROVIDER=openai
 # TRANSCRIPTION_SERVICE_MODEL=
 
+# Default bot display name in meetings (per-request bot_name overrides).
+# Unset = "VexaBot-<random>".
+# BOT_DEFAULT_NAME=
+
+# Admission policy (ms). Unset = system defaults (15 min admission wait).
+# Set BOT_MAX_WAIT_FOR_ADMISSION_MS short for a "default to deny" posture — the
+# bot gives up quickly if ignored; explicit host denial always leaves instantly.
+# BOT_MAX_WAIT_FOR_ADMISSION_MS=60000
+# BOT_MAX_BOT_TIME_MS=7200000
+# BOT_MAX_TIME_LEFT_ALONE_MS=900000
+# BOT_NO_ONE_JOINED_TIMEOUT_MS=120000
+
 # ============================================================================
 # Ports — change these to avoid conflicts with other stacks
 # ============================================================================

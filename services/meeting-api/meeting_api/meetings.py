@@ -1036,12 +1036,22 @@ async def request_bot(
     except Exception:
         pass
 
-    # System defaults for timeouts (ms)
+    # System defaults for timeouts (ms). Env-overridable so a deployment can set
+    # its own policy without per-request config. ToughCall sets a short
+    # BOT_MAX_WAIT_FOR_ADMISSION_MS ("default to deny"): the bot gives up quickly
+    # if the host ignores the knock, instead of lingering in the lobby. An
+    # explicit host denial already makes the bot leave immediately (admission.ts).
+    def _env_default(env_name: str, fallback: int) -> int:
+        try:
+            return int(os.getenv(env_name) or fallback)
+        except (TypeError, ValueError):
+            return fallback
+
     SYSTEM_DEFAULTS = {
-        "max_bot_time": 7200000,          # 2h
-        "max_wait_for_admission": 900000, # 15 min
-        "max_time_left_alone": 900000,    # 15 min
-        "no_one_joined_timeout": 120000,  # 2 min
+        "max_bot_time": _env_default("BOT_MAX_BOT_TIME_MS", 7200000),                  # 2h
+        "max_wait_for_admission": _env_default("BOT_MAX_WAIT_FOR_ADMISSION_MS", 900000), # 15 min
+        "max_time_left_alone": _env_default("BOT_MAX_TIME_LEFT_ALONE_MS", 900000),     # 15 min
+        "no_one_joined_timeout": _env_default("BOT_NO_ONE_JOINED_TIMEOUT_MS", 120000), # 2 min
     }
 
     # Resolution order: per-request → user.data.bot_config → system defaults
@@ -1080,7 +1090,7 @@ async def request_bot(
         "meeting_id": meeting_id,
         "platform": req.platform.value,
         "meetingUrl": constructed_url,
-        "botName": req.bot_name or f"VexaBot-{uuid_lib.uuid4().hex[:6]}",
+        "botName": req.bot_name or os.getenv("BOT_DEFAULT_NAME") or f"VexaBot-{uuid_lib.uuid4().hex[:6]}",
         "token": meeting_token,
         "nativeMeetingId": native_meeting_id,
         "connectionId": connection_id,
