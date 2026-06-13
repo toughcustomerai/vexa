@@ -124,6 +124,16 @@ export class TranscriptionClient {
    * Retries on transient failures (503, network errors).
    */
   async transcribe(audioData: Float32Array, language?: string, prompt?: string): Promise<TranscriptionResult> {
+    // Skip near-empty chunks. VAD edges occasionally hand us a sliver of audio;
+    // OpenAI-compatible providers (Groq) reject anything under 0.01s with HTTP 400
+    // ("Audio file is too short"). A 0.1s floor is safe for both dialects — the
+    // in-house service tolerates such chunks but they carry no transcribable speech.
+    const durationSec = audioData.length / this.sampleRate;
+    if (durationSec < 0.1) {
+      log(`[TranscriptionClient] Skipping ${(durationSec * 1000).toFixed(0)}ms chunk (below 0.1s floor) — not transcribable`);
+      return { text: '', language: language || 'unknown', language_probability: 0, duration: durationSec, segments: [] };
+    }
+
     const wavBuffer = this.float32ToWav(audioData);
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
