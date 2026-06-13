@@ -342,7 +342,7 @@ export function AgentChat() {
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
             <h2 className="font-semibold text-sm">
-              {useAgentStore.getState().sessions.find(s => s.id === activeSessionId)?.name || "Vexa Agent"}
+              {useAgentStore.getState().sessions.find(s => s.id === activeSessionId)?.name || "ToughCall Agent"}
             </h2>
             {isStreaming && (
               <Badge variant="secondary" className="text-xs">

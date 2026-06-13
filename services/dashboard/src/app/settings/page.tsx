@@ -323,7 +323,7 @@ AI_API_KEY=your_ai_api_key_here`}
             <Separator />
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Vexa Dashboard is an open source web interface for Vexa, the self-hosted meeting transcription API.
+                ToughCall is your meeting transcription and post-call sales-coaching dashboard.
               </p>
               <div className="flex gap-4">
                 <a

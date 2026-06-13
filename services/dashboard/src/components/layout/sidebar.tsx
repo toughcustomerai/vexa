@@ -375,7 +375,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             <div className="px-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground">vexa</span>
+                <span className="text-[11px] text-muted-foreground">ToughCall</span>
                 <VersionChip variant="minimal" look="pill" />
               </div>
             </div>

@@ -127,7 +127,7 @@ export default function LoginPage() {
 
       if (result.success) {
         if (result.mode === "direct") {
-          toast.success(result.isNewUser ? "Account created! Welcome to Vexa." : "Welcome back!");
+          toast.success(result.isNewUser ? "Account created! Welcome to ToughCall." : "Welcome back!");
           router.push("/");
           return; // Keep submitting state during redirect
         } else {
@@ -200,7 +200,7 @@ export default function LoginPage() {
         {/* Large Vexa wordmark */}
         <div className="mb-12 flex flex-col items-center gap-3">
           <Logo size="lg" showText={false} />
-          <span className="text-lg font-semibold tracking-[-0.02em] text-foreground">vexa</span>
+          <span className="text-lg font-semibold tracking-[-0.02em] text-foreground">ToughCall</span>
         </div>
 
         {/* Hero heading */}
@@ -313,7 +313,7 @@ export default function LoginPage() {
         </button>
 
         <p className="absolute bottom-6 text-[11.5px] text-muted-foreground">
-          Open Source · Developer-first · API-first
+          AI-powered sales coaching
         </p>
       </div>
     );

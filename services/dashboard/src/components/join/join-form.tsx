@@ -37,9 +37,9 @@ export function JoinForm({ onSuccess }: JoinFormProps) {
   const [passcode, setPasscode] = useState("");
   const [botName, setBotName] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("vexa-join-bot-name") || "Vexa";
+      return localStorage.getItem("vexa-join-bot-name") || "ToughCall";
     }
-    return "Vexa";
+    return "ToughCall";
   });
   const [language, setLanguage] = useState("auto");
   const [transcribeEnabled, setTranscribeEnabled] = useState(true);
@@ -104,7 +104,7 @@ export function JoinForm({ onSuccess }: JoinFormProps) {
     }
 
     // Set bot name - use custom name or configured default
-    request.bot_name = botName.trim() || config?.defaultBotName || "Vexa";
+    request.bot_name = botName.trim() || config?.defaultBotName || "ToughCall";
 
     // Persist to localStorage
     if (typeof window !== "undefined") {

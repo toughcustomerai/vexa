@@ -48,9 +48,9 @@ export function JoinModal() {
   const [transcribeEnabled, setTranscribeEnabled] = useState(true);
   const [botName, setBotName] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("vexa-join-bot-name") || "Vexa";
+      return localStorage.getItem("vexa-join-bot-name") || "ToughCall";
     }
-    return "Vexa";
+    return "ToughCall";
   });
   const [passcode, setPasscode] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -147,7 +147,7 @@ export function JoinModal() {
       request.meeting_url = parsedInput.originalUrl;
     }
 
-    request.bot_name = botName.trim() || config?.defaultBotName || "Vexa";
+    request.bot_name = botName.trim() || config?.defaultBotName || "ToughCall";
 
     if (language && language !== "auto") {
       request.language = language;
@@ -480,7 +480,7 @@ export function JoinModal() {
             </Label>
             <Input
               id="botName"
-              placeholder="Vexa"
+              placeholder="ToughCall"
               value={botName}
               onChange={(e) => setBotName(e.target.value)}
               className="h-10"

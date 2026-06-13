@@ -17,19 +17,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vexa Dashboard",
-  description: "Open source meeting transcription dashboard for Vexa",
+  title: "ToughCall",
+  description: "AI-powered sales coaching — meeting transcription and post-call coaching.",
   icons: {
     icon: [
       {
-        url: withBasePath("/icons/vexadark.svg"),
-        type: "image/svg+xml",
+        url: withBasePath("/icons/toughcustomer-logo.png"),
+        type: "image/png",
       },
     ],
     apple: [
       {
-        url: withBasePath("/icons/vexadark.svg"),
-        type: "image/svg+xml",
+        url: withBasePath("/icons/toughcustomer-logo.png"),
+        type: "image/png",
       },
     ],
   },
