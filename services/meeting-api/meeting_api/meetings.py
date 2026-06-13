@@ -2065,6 +2065,44 @@ async def transcribe_meeting(
     # Model name override for external OpenAI-compatible providers (Groq, OpenAI, ...).
     # Default is the in-house transcription-service model name.
     tx_model = os.environ.get("TRANSCRIPTION_SERVICE_MODEL") or "large-v3-turbo"
+
+    # External providers return full language names ("English"); the segment
+    # validator requires ISO-639-1 codes. Mirrors the bot-side normalization in
+    # vexa-bot/core/src/services/transcription-client.ts.
+    _WHISPER_LANGUAGE_CODES = {
+        "english": "en", "chinese": "zh", "german": "de", "spanish": "es", "russian": "ru",
+        "korean": "ko", "french": "fr", "japanese": "ja", "portuguese": "pt", "turkish": "tr",
+        "polish": "pl", "catalan": "ca", "dutch": "nl", "arabic": "ar", "swedish": "sv",
+        "italian": "it", "indonesian": "id", "hindi": "hi", "finnish": "fi", "vietnamese": "vi",
+        "hebrew": "he", "ukrainian": "uk", "greek": "el", "malay": "ms", "czech": "cs",
+        "romanian": "ro", "danish": "da", "hungarian": "hu", "tamil": "ta", "norwegian": "no",
+        "thai": "th", "urdu": "ur", "croatian": "hr", "bulgarian": "bg", "lithuanian": "lt",
+        "latin": "la", "maori": "mi", "malayalam": "ml", "welsh": "cy", "slovak": "sk",
+        "telugu": "te", "persian": "fa", "latvian": "lv", "bengali": "bn", "serbian": "sr",
+        "azerbaijani": "az", "slovenian": "sl", "kannada": "kn", "estonian": "et",
+        "macedonian": "mk", "breton": "br", "basque": "eu", "icelandic": "is", "armenian": "hy",
+        "nepali": "ne", "mongolian": "mn", "bosnian": "bs", "kazakh": "kk", "albanian": "sq",
+        "swahili": "sw", "galician": "gl", "marathi": "mr", "punjabi": "pa", "sinhala": "si",
+        "khmer": "km", "shona": "sn", "yoruba": "yo", "somali": "so", "afrikaans": "af",
+        "occitan": "oc", "georgian": "ka", "belarusian": "be", "tajik": "tg", "sindhi": "sd",
+        "gujarati": "gu", "amharic": "am", "yiddish": "yi", "lao": "lo", "uzbek": "uz",
+        "faroese": "fo", "haitian creole": "ht", "pashto": "ps", "turkmen": "tk",
+        "nynorsk": "nn", "maltese": "mt", "sanskrit": "sa", "luxembourgish": "lb",
+        "myanmar": "my", "tibetan": "bo", "tagalog": "tl", "malagasy": "mg", "assamese": "as",
+        "tatar": "tt", "hawaiian": "haw", "lingala": "ln", "hausa": "ha", "bashkir": "ba",
+        "javanese": "jw", "sundanese": "su", "cantonese": "yue", "burmese": "my",
+        "valencian": "ca", "flemish": "nl", "haitian": "ht", "letzeburgesch": "lb",
+        "pushto": "ps", "panjabi": "pa", "moldavian": "ro", "moldovan": "ro",
+        "sinhalese": "si", "castilian": "es", "mandarin": "zh",
+    }
+
+    def _normalize_language_code(lang):
+        if not lang:
+            return lang
+        lower = lang.lower().strip()
+        if len(lower) <= 3:
+            return lower
+        return _WHISPER_LANGUAGE_CODES.get(lower, lang)
     if not tx_url:
         raise HTTPException(status_code=503, detail="TRANSCRIPTION_SERVICE_URL not configured")
 
@@ -2098,7 +2136,7 @@ async def transcribe_meeting(
     # 5. Parse and filter segments
     segments = tx_result.get("segments", [])
     segments = [s for s in segments if 'start' in s and 'end' in s and s.get('text', '').strip()]
-    detected_language = tx_result.get("language", req.language or "unknown")
+    detected_language = _normalize_language_code(tx_result.get("language")) or req.language or "unknown"
 
     # 6. Map speakers using speaker_events from meeting.data
     meeting_data = meeting.data or {}
