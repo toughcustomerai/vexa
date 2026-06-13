@@ -435,7 +435,11 @@ services:
       - DB_SSL_MODE=disable
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - MEETING_API_URL=http://meeting-api:8080
+      # Route bot dispatch through the GATEWAY (not meeting-api directly) so the
+      # BOT_API_TOKEN is authenticated and the meeting is owned by that user.
+      # Posting straight to meeting-api:8080 bypasses auth → meetings get user_id=0
+      # and the owner's API key/dashboard can't read their transcripts.
+      - MEETING_API_URL=http://api-gateway:8000
       - BOT_API_TOKEN=${BOT_API_TOKEN:-}
       - BOT_DEFAULT_NAME=${BOT_DEFAULT_NAME:-}
       - SYNC_INTERVAL_SECONDS=${CALENDAR_SYNC_INTERVAL:-300}
