@@ -331,6 +331,8 @@ TEST_AUDIO := $(ROOT)/tests3/testdata/test-speech-en.wav
 test-transcription:
 	@TX_URL=$$(grep -E '^TRANSCRIPTION_SERVICE_URL=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
 	TX_TOKEN=$$(grep -E '^TRANSCRIPTION_SERVICE_TOKEN=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
+	TX_MODEL=$$(grep -E '^TRANSCRIPTION_SERVICE_MODEL=' $(ENV_FILE) 2>/dev/null | cut -d= -f2); \
+	TX_MODEL=$${TX_MODEL:-large-v3-turbo}; \
 	if [ -z "$$TX_URL" ]; then \
 		echo "  ✗ Transcription: TRANSCRIPTION_SERVICE_URL not set in .env"; \
 		exit 1; \
@@ -344,7 +346,7 @@ test-transcription:
 		-H "Authorization: Bearer $$TX_TOKEN" \
 		-F "file=@$(TEST_AUDIO)" \
 		-F "language=en" \
-		-F "model=large-v3-turbo" \
+		-F "model=$$TX_MODEL" \
 		-w "\n%{http_code}" 2>&1); \
 	HTTP=$$(echo "$$RESP" | tail -1); \
 	BODY=$$(echo "$$RESP" | head -n -1); \
