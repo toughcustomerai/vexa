@@ -31,6 +31,16 @@ TRANSCRIPTION_SERVICE_TOKEN=your-token
 # BOT_MAX_TIME_LEFT_ALONE_MS=900000
 # BOT_NO_ONE_JOINED_TIMEOUT_MS=120000
 
+# Google Calendar auto-join (calendar-service, AS-13). Create an OAuth Web client
+# in Google Cloud Console; redirect URI = <dashboard>/api/calendar/oauth/complete.
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+# GOOGLE_OAUTH_STATE_SECRET=        # random; signs the OAuth state param
+# GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3001/api/calendar/oauth/complete
+# BOT_API_TOKEN=                    # token calendar-service dispatches bots under
+# CALENDAR_SYNC_INTERVAL=300        # seconds between calendar polls
+# CALENDAR_LEAD_TIME=2              # minutes before start to dispatch the bot
+
 # ============================================================================
 # Ports — change these to avoid conflicts with other stacks
 # ============================================================================
